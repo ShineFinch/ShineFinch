@@ -2,6 +2,8 @@
 #include <QQmlApplicationEngine>
 #include <QIcon>
 #include <QSystemTrayIcon>
+#include <QHotkey>
+#include "src/ShortcutManager.h"
 
 int main(int argc, char *argv[])
 {
@@ -18,7 +20,8 @@ int main(int argc, char *argv[])
     trayIcon.setToolTip("ShineFinch");
     trayIcon.show();
 
-
+    // Register Global shortcut.
+    ShortcutManager::registerShortCut(&app);
 
     QQmlApplicationEngine engine;
     QObject::connect(

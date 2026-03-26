@@ -5,6 +5,17 @@ project(ShineFinch VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTORCC ON)
 
+
+include(FetchContent)
+FetchContent_Declare(
+    QHotkey
+    GIT_REPOSITORY https://github.com/Skycoder42/QHotkey.git
+    GIT_TAG 1.5.0
+    GIT_SHALLOW TRUE
+)
+set(QT_DEFAULT_MAJOR_VERSION 6 CACHE STRING "Qt version for QHotkey" FORCE)
+FetchContent_MakeAvailable(QHotkey)
+
 find_package(Qt6 REQUIRED COMPONENTS Quick Widgets)
 
 qt_standard_project_setup(REQUIRES 6.10)
@@ -19,6 +30,9 @@ qt_add_qml_module(appShineFinch
         Main.qml
     RESOURCES
         res.qrc
+    SOURCES
+    src/ShortcutManager.h
+    src/ShortcutManager.cpp
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -33,7 +47,7 @@ set_target_properties(appShineFinch PROPERTIES
 )
 
 target_link_libraries(appShineFinch
-    PRIVATE Qt6::Quick Qt6::Widgets
+    PRIVATE Qt6::Quick Qt6::Widgets QHotkey::QHotkey
 )
 
 install(TARGETS appShineFinch
