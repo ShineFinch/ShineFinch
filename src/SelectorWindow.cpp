@@ -5,6 +5,7 @@
 #include <QVBoxLayout>
 #include <QObject>
 #include <QQuickItem>
+#include <QTimer>
 
 
 SelectorWindow::SelectorWindow(QWidget *parent)
@@ -36,8 +37,8 @@ SelectorWindow::SelectorWindow(QWidget *parent)
 
     QObject* qmlRoot = static_cast<QObject*>(qmlItem);
 
-    connect(qmlRoot, SIGNAL(confirm()), this, SLOT(onConfirm()));
-    connect(qmlRoot, SIGNAL(cancel()), this, SLOT(onCancel()));
+    connect(qmlRoot, SIGNAL(tiggerConfirmed()), this, SLOT(onConfirm()));
+    connect(qmlRoot, SIGNAL(tiggerCanceled()), this, SLOT(onCancel()));
 }
 
 
@@ -103,7 +104,7 @@ void SelectorWindow::paintEvent(QPaintEvent*)
 void SelectorWindow::keyPressEvent(QKeyEvent* e)
 {
     if (e->key() == Qt::Key_Escape) {
-        emit canceled();
+        // emit canceled();
         close();
     }
 }
@@ -111,13 +112,16 @@ void SelectorWindow::keyPressEvent(QKeyEvent* e)
 void SelectorWindow::onConfirm()
 {
     capture();
+    qDebug() << "onConfirm \n";
     close();
 }
 
 void SelectorWindow::onCancel()
 {
-    emit canceled();
-    close();
+    // emit canceled();
+    qDebug() << "onCancel \n";
+    // close();
+    QTimer::singleShot(100, this, &SelectorWindow::close);
 }
 
 void SelectorWindow::capture()

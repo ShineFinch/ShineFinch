@@ -34,10 +34,6 @@ int main(int argc, char *argv[])
     engine.loadFromModule("ShineFinch", "Main");
 
 
-    Screenshot *screenshot = new Screenshot(&app);
-    engine.setInitialProperties({{"screenshot", QVariant::fromValue(screenshot)}});
-
-
     // Register Global shortcut.
     ShortcutManager::registerShortCut(&app);
 

@@ -17,13 +17,16 @@ set(QT_DEFAULT_MAJOR_VERSION 6 CACHE STRING "Qt version for QHotkey" FORCE)
 FetchContent_MakeAvailable(QHotkey)
 
 
+
 find_package(Qt6 REQUIRED COMPONENTS Quick Widgets QuickWidgets Concurrent )
+find_package(Tesseract CONFIG REQUIRED)
 
 qt_standard_project_setup(REQUIRES 6.10)
 
 qt_add_executable(ShineFinch
     main.cpp
 )
+
 
 qt_add_qml_module(ShineFinch
     URI ShineFinch
@@ -39,6 +42,7 @@ qt_add_qml_module(ShineFinch
         src/Screenshot.cpp
         src/SelectorWindow.h
         src/SelectorWindow.cpp
+        RESOURCES vcpkg.json
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -59,7 +63,9 @@ target_link_libraries(ShineFinch
         Qt6::QuickWidgets
         Qt6::Concurrent
         QHotkey::QHotkey
+        Tesseract::libtesseract
 )
+
 
 install(TARGETS ShineFinch
     BUNDLE DESTINATION .

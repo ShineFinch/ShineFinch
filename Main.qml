@@ -10,7 +10,6 @@ Window {
     title: qsTr("ShineFinch")
 
     property bool showScreenshotOverlay: false
-    property var screenshot
 
     Item {
         visible: showScreenshotOverlay

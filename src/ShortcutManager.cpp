@@ -1,5 +1,5 @@
 #include "ShortcutManager.h"
-#include "Screenshot.h"
+
 
 #include <QDir>
 
@@ -10,6 +10,9 @@
 
 QHotkey* ShortcutManager::m_hotkey = nullptr;
 
+
+
+
 void ShortcutManager::registerShortCut(QGuiApplication *app)
 {
     if (m_hotkey != nullptr) {
@@ -19,10 +22,17 @@ void ShortcutManager::registerShortCut(QGuiApplication *app)
 
     m_hotkey = new QHotkey(QKeySequence("F2"), true, app);
 
-    QObject::connect(m_hotkey, &QHotkey::activated, app, [=]() {
+    Screenshot& screenshot = ShortcutManager::getScreenshot(app);
+    QObject::connect(m_hotkey, &QHotkey::activated, app, [&]() {
         // qDebug() << "Hotkey F2 Activated!";
-        static Screenshot* screenshotTool = new Screenshot(app);
-        screenshotTool->start();
+       screenshot.start();
     });
 
+}
+
+Screenshot& ShortcutManager::getScreenshot(QGuiApplication *app)
+{
+
+    static Screenshot instance(nullptr);
+    return instance;
 }
