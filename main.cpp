@@ -1,13 +1,14 @@
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QIcon>
 #include <QSystemTrayIcon>
 #include <QHotkey>
 #include "src/ShortcutManager.h"
+#include "src/Screenshot.h"
 
 int main(int argc, char *argv[])
 {
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
 
     // Set Icon
     QString logoPath = ":/assets/ShineFinch.png";
@@ -20,8 +21,8 @@ int main(int argc, char *argv[])
     trayIcon.setToolTip("ShineFinch");
     trayIcon.show();
 
-    // Register Global shortcut.
-    ShortcutManager::registerShortCut(&app);
+
+
 
     QQmlApplicationEngine engine;
     QObject::connect(
@@ -31,6 +32,14 @@ int main(int argc, char *argv[])
         []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
     engine.loadFromModule("ShineFinch", "Main");
+
+
+    Screenshot *screenshot = new Screenshot(&app);
+    engine.setInitialProperties({{"screenshot", QVariant::fromValue(screenshot)}});
+
+
+    // Register Global shortcut.
+    ShortcutManager::registerShortCut(&app);
 
     return QCoreApplication::exec();
 }

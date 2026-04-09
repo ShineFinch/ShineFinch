@@ -10,4 +10,5 @@ public:
 
 private:
    static QHotkey* m_hotkey;
+
 };
