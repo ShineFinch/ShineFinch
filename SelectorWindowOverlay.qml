@@ -12,15 +12,15 @@ Row {
         // background: Rectangle { color: "#2EBD68"; radius: 8 }
         onClicked: {
                console.log("confirm() clicked!")
-               confirm()
+               tiggerConfirmed()
         }
     }
     Button {
         text: "Cancel"
         // background: Rectangle { color: "#FF5252"; radius: 8 }
-        onClicked: cancel()
+        onClicked: tiggerCanceled()
     }
 
-    signal confirm()
-    signal cancel()
+    signal tiggerConfirmed()
+    signal tiggerCanceled()
 }
