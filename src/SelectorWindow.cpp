@@ -39,6 +39,7 @@ SelectorWindow::SelectorWindow(QWidget *parent)
 
     connect(qmlRoot, SIGNAL(tiggerConfirmed()), this, SLOT(onConfirm()));
     connect(qmlRoot, SIGNAL(tiggerCanceled()), this, SLOT(onCancel()));
+    connect(qmlRoot, SIGNAL(triggerOCR()), this, SLOT(onOCR()));
 }
 
 
@@ -54,6 +55,10 @@ QScreen* SelectorWindow::screenAtPos(const QPoint& globalPos)
 
 void SelectorWindow::mousePressEvent(QMouseEvent* e)
 {
+    if (m_selectionFinished) {
+        return;
+    }
+
     if (e->button() == Qt::LeftButton) {
         m_start = e->globalPosition().toPoint();
         m_targetScreen = screenAtPos(m_start);
@@ -77,12 +82,10 @@ void SelectorWindow::mouseReleaseEvent(QMouseEvent*)
     update();
 
     if (m_selectionRect.width() > 5 && m_selectionRect.height() > 5) {
-        m_qmlControls->setGeometry(
-            m_selectionRect.right() - 160,
-            m_selectionRect.bottom() + 10,
-            160, 50
-            );
+        m_qmlControls->move(m_selectionRect.left(), m_selectionRect.bottom() + 10);
+        m_qmlControls->adjustSize();
         m_qmlControls->show();
+        m_selectionFinished = true;
     }
 }
 
@@ -104,34 +107,91 @@ void SelectorWindow::paintEvent(QPaintEvent*)
 void SelectorWindow::keyPressEvent(QKeyEvent* e)
 {
     if (e->key() == Qt::Key_Escape) {
-        // emit canceled();
-        close();
+        qDebug() << "escape clicked";
+        emit canceled();
     }
 }
 
 void SelectorWindow::onConfirm()
 {
-    capture();
+    capture(false);
     qDebug() << "onConfirm \n";
-    close();
+     emit canceled();
+
 }
 
 void SelectorWindow::onCancel()
 {
-    // emit canceled();
+    emit canceled();
     qDebug() << "onCancel \n";
     // close();
-    QTimer::singleShot(100, this, &SelectorWindow::close);
+    // QTimer::singleShot(100, this, &SelectorWindow::close);
 }
 
-void SelectorWindow::capture()
+void SelectorWindow::onOCR()
+{
+    capture(true);
+    qDebug() << "onOCR \n";
+}
+
+void SelectorWindow::showOcrResult(const QString &text)
+{
+    QObject *root = m_qmlControls->rootObject();
+
+    bool connected = QMetaObject::invokeMethod(
+        root,
+        "setOcrResult",
+        Qt::AutoConnection,
+        Q_ARG(QVariant, text)
+        );
+}
+
+void SelectorWindow::resetOcrResult()
+{
+    QObject *root = m_qmlControls->rootObject();
+
+    bool connected = QMetaObject::invokeMethod(
+        root,
+        "resetOcrResult",
+        Qt::AutoConnection
+        );
+}
+
+void SelectorWindow::clearSelectionWindow()
+{
+    m_selectionRect = QRect();
+    m_start = QPoint();
+    m_end = QPoint();
+    m_isSelecting = false;
+    m_selectionFinished = false;
+    m_targetScreen = nullptr;
+
+    if (m_qmlControls && m_qmlControls->isVisible()) {
+        m_qmlControls->hide();
+    }
+
+    resetOcrResult();
+
+    this->activateWindow();
+    this->setFocus(Qt::ActiveWindowFocusReason);
+    this->raise();
+
+    update();
+
+    qDebug() << "clearSelectionWindow";
+}
+
+
+void SelectorWindow::capture(bool ocr)
 {
     if (!m_targetScreen || m_selectionRect.isEmpty())
         return;
 
     QRect screenRect = m_targetScreen->geometry();
     QRect localRect = m_selectionRect.translated(-screenRect.topLeft());
-    this->hide();
+    if (!ocr){
+        this->hide();
+    }
 
     QGuiApplication::processEvents();
     QScreen* primaryScreen = QGuiApplication::primaryScreen();
@@ -144,7 +204,7 @@ void SelectorWindow::capture()
         );
 
     if (!pix.isNull()) {
-        emit captured(pix);
+        emit captured(pix, ocr);
     }
 
 
