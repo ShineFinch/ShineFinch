@@ -13,7 +13,7 @@ public:
     explicit SelectorWindow(QWidget *parent = nullptr);
 
 signals:
-    void captured(QPixmap pixmap);
+    void captured(QPixmap pixmap, bool ocr);
     void canceled();
 
 protected:
@@ -23,20 +23,25 @@ protected:
     void paintEvent(QPaintEvent*) override;
     void keyPressEvent(QKeyEvent*) override;
 
-private slots:
+public slots:
     void onConfirm();
     void onCancel();
+    void onOCR();
+    void showOcrResult(const QString &text);
+    void resetOcrResult();
+    void clearSelectionWindow();
 
 private:
     QPoint m_start;
     QPoint m_end;
     bool m_isSelecting = false;
+    bool m_selectionFinished = false;
     QRect m_selectionRect;
     QScreen* m_targetScreen = nullptr;
     QQuickWidget* m_qmlControls;
 
     QScreen* screenAtPos(const QPoint& globalPos);
-    void capture();
+    void capture(bool ocr);
 };
 
 #endif // SELECTORWINDOW_H

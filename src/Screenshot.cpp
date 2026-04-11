@@ -56,6 +56,8 @@ void Screenshot::start()
     if (m_selectorWindow != nullptr) {
         m_selectorWindow->raise();
         m_selectorWindow->activateWindow();
+        m_selectorWindow->setWindowState(Qt::WindowActive);
+        m_selectorWindow->show();
         qDebug() << "SelectorWindow exist.\n";
         return;
     }
@@ -64,17 +66,23 @@ void Screenshot::start()
     m_selectorWindow = new SelectorWindow(nullptr);
 
     connect(m_selectorWindow, &SelectorWindow::captured, this, &Screenshot::onCaptured);
-    connect(m_selectorWindow, &SelectorWindow::canceled, this, &QObject::deleteLater);
+    connect(m_selectorWindow, &SelectorWindow::canceled, this, [this]{
+        m_selectorWindow->clearSelectionWindow();
+
+        m_selectorWindow->hide();
+    });
 
     connect(m_selectorWindow, &SelectorWindow::destroyed, this, [this](){
         qDebug() << "SelectorWindow destroyed.\n";
         m_selectorWindow = nullptr;
     });
 
-    m_selectorWindow->show();
+    connect(this, &Screenshot::ocrResultReady, m_selectorWindow, &SelectorWindow::showOcrResult);
+
     m_selectorWindow->raise();
     m_selectorWindow->activateWindow();
     m_selectorWindow->setWindowState(Qt::WindowActive);
+    m_selectorWindow->show();
 }
 
 void cleanOldImages(const QString& folderPath, int maxCount = 20)
@@ -91,48 +99,23 @@ void cleanOldImages(const QString& folderPath, int maxCount = 20)
     }
 }
 
-Pix * Screenshot::OCR(QClipboard *clipboard, QString filename)
+QString Screenshot::doOCR(const QString &filename)
 {
-    qDebug() << "OCR starting.\n";
+    qDebug() << "OCR starting...";
     Pix *image = pixRead(filename.toUtf8());
+    if (!image) return "OCR failed";
+
     m_ocr->SetImage(image);
     char *outText = m_ocr->GetUTF8Text();
-    QString result = QString::fromUtf8(outText);
+    QString result = QString::fromUtf8(outText).trimmed();
 
-
-    QWidget *window = new QWidget(nullptr);
-    window->setWindowTitle("OCR Result");
-    window->setMinimumSize(600, 400);
-    window->setAttribute(Qt::WA_DeleteOnClose);
-    window->setWindowFlags(Qt::WindowStaysOnTopHint);
-
-    QTextEdit *textEdit = new QTextEdit(nullptr);
-    textEdit->setPlainText(result);
-    textEdit->setReadOnly(true);
-    textEdit->setStyleSheet(R"(
-        QTextEdit {
-            font-size: 14px;
-            padding: 12px;
-            border: none;
-            outline: none;
-            color: #333333;
-        }
-    )");
-
-    QVBoxLayout *layout = new QVBoxLayout(window);
-    layout->setContentsMargins(10,10,10,10);
-    layout->addWidget(textEdit);
-
-    window->show();
-    window->raise();
-    window->activateWindow();
     delete[] outText;
-
-    qDebug() << "OCR finished.\n";
-    return image;
+    pixDestroy(&image);
+    qDebug() << "OCR finished!";
+    return result;
 }
 
-void Screenshot::onCaptured(QPixmap pix)
+void Screenshot::onCaptured(QPixmap pix, bool ocr)
 {
     qDebug() << "onCpatued";
 
@@ -149,7 +132,9 @@ void Screenshot::onCaptured(QPixmap pix)
     QString filename = path + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss") + ".png";
     pix.save(filename, "PNG", 100);
 
-    // OCR
-    Pix *image = OCR(clipboard, filename);
-    pixDestroy(&image);
+    if (ocr){
+        // OCR
+        QString text = doOCR(filename);
+        emit ocrResultReady(text);
+    }
 }
